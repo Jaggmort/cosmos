@@ -40,6 +40,7 @@ async def blink(canvas, row, column, symbol='*', offset_tics=3):
 
 def draw(canvas, star_numbers):
     canvas.nodelay(1)
+    canvas.border()
     curses.curs_set(False)
     max_row, max_col = canvas.getmaxyx()
     corutines = []
@@ -60,10 +61,9 @@ def draw(canvas, star_numbers):
         for corutine in corutines.copy():
             try:
                 corutine.send(None)
-                canvas.border()
-                canvas.refresh()
             except StopIteration:
                 corutines.remove(corutine)
+        canvas.refresh()                
         time.sleep(TIC_TIMEOUT)
 
 
