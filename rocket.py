@@ -63,7 +63,7 @@ def draw(canvas, star_numbers):
                 corutine.send(None)
             except StopIteration:
                 corutines.remove(corutine)
-        canvas.refresh()                
+        canvas.refresh()
         time.sleep(TIC_TIMEOUT)
 
 
@@ -83,7 +83,7 @@ async def draw_rocket(canvas):
     current_frame = rocket_frames[0]
     rocket_rows, rocket_cols = get_frame_size(current_frame)
     iterator = cycle(rocket_frames)
-    row = (max_row) / 2
+    row = (max_row - 1) / 2
     col = (max_col) / 2
     count = 0
 
