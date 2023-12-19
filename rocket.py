@@ -22,8 +22,8 @@ async def sleep(ticks=1):
         await asyncio.sleep(0)
 
 
-async def blink(canvas, row, column, symbol='*'):
-    await sleep(random.randint(0, 10))
+async def blink(canvas, row, column, symbol='*', offset_tics=3):
+    await sleep(offset_tics)
     while True:
         canvas.addstr(row, column, symbol, curses.A_DIM)
         await sleep(20)
@@ -47,7 +47,8 @@ def draw(canvas, star_numbers):
         star = blink(canvas,
                      random.randint(1, max_row - 1),
                      random.randint(1, max_col - 1),
-                     symbol=random.choice(STAR_SYMBOLS)
+                     symbol=random.choice(STAR_SYMBOLS),
+                     offset_tics=random.randint(0, 10),
                      )
         corutines.append(star)
     shot = fire(canvas, int(max_row-1), int(max_col/2))
