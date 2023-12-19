@@ -3,7 +3,7 @@ import curses
 import asyncio
 import random
 import os
-from curses_tools import get_frame_size, draw_frame, read_controls
+from curses_tools import get_frame_size, draw_frame
 from fire_animation import fire
 from itertools import cycle
 
