@@ -3,7 +3,7 @@ import curses
 import asyncio
 import random
 import os
-from curses_tools import get_frame_size, draw_frame
+from curses_tools import get_frame_size, draw_frame, read_controls
 from fire_animation import fire
 from itertools import cycle
 
@@ -90,20 +90,21 @@ async def draw_rocket(canvas):
     while True:
         draw_frame(canvas, row, col, current_frame, negative=True)
         count += 1
+        move_row, move_col, _ = read_controls(canvas)
 
-        pressed_key_code = canvas.getch()
-        if pressed_key_code == 452 and rocket_cols - 2 < col:
+        if move_col == -1 and rocket_cols - 2 < col:
             col -= 2
-        if pressed_key_code == 454 and max_col - rocket_cols > col + 2:
+        if move_col == 1 and max_col - rocket_cols > col + 2:
             col += 2
-        if pressed_key_code == 450 and row > 1:
+        if move_row == -1 and row > 1:
             row -= 1
-        if pressed_key_code == 456 and max_row - rocket_rows >= row + 2:
+        if move_row == 1 and max_row - rocket_rows >= row + 2:
             row += 1
 
         if count == 2:
             current_frame = next(iterator)
             count = 0
+
         draw_frame(canvas, row, col, current_frame, negative=False)
         await sleep(1)
 
