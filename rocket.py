@@ -201,8 +201,8 @@ async def print_game_over(canvas, raw, col, frame):
         await sleep(1)
 
 
-def draw_message(canvas, year, phrase, rows):
-    small_window = canvas.derwin(3, 50, rows - 3, 0)
+def draw_message(canvas, year, phrase, row):
+    small_window = canvas.derwin(3, 50, row - 3, 0)
     small_window.addstr(1, 2, f'{year}: {phrase}')
     small_window.refresh()
 
