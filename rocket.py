@@ -13,10 +13,10 @@ from itertools import cycle
 
 TIC_TIMEOUT = 0.1
 STAR_SYMBOLS = ["+", "*", ".", ":"]
-CORUTINES = []
-OBSTACLES = []
-OBSTACLES_IN_LAST_COLLISIONS = []
-YEAR = 1957
+corutines = []
+obstacles = []
+obstacles_in_last_collisions = []
+year = 1957
 PHRASES = {
     1957: "First Sputnik",
     1961: "Gagarin flew!",
@@ -51,27 +51,28 @@ async def blink(canvas, row, column, symbol='*', offset_tics=3):
 
 
 def draw(canvas, star_numbers):
+    global corutines
     canvas.nodelay(1)
     canvas.border()
     curses.curs_set(False)
     max_row, max_col = canvas.getmaxyx()
     garbage_frames = get_list_frames('./images/garbage')
     for _ in range(star_numbers):
-        CORUTINES.append(blink(canvas,
+        corutines.append(blink(canvas,
                                random.randint(1, max_row - 2),
                                random.randint(1, max_col - 2),
                                symbol=random.choice(STAR_SYMBOLS),
                                offset_tics=random.randint(0, 10),
                                ))
-    CORUTINES.append(draw_rocket(canvas))
-    CORUTINES.append(fill_orbit_with_garbage(canvas, max_col, garbage_frames))
-    CORUTINES.append(show_year(canvas, PHRASES, max_row))
+    corutines.append(draw_rocket(canvas))
+    corutines.append(fill_orbit_with_garbage(canvas, max_col, garbage_frames))
+    corutines.append(show_year(canvas, PHRASES, max_row))
     while True:
-        for corutine in CORUTINES.copy():
+        for corutine in corutines.copy():
             try:
                 corutine.send(None)
             except StopIteration:
-                CORUTINES.remove(corutine)
+                corutines.remove(corutine)
         canvas.refresh()
         time.sleep(TIC_TIMEOUT)
 
@@ -87,6 +88,8 @@ def get_list_frames(folder):
 
 
 async def draw_rocket(canvas):
+    global obstacles
+    global corutines
     max_row, max_col = canvas.getmaxyx()
     rocket_frames = get_list_frames('./images/rocket')
     current_frame = rocket_frames[0]
@@ -110,16 +113,16 @@ async def draw_rocket(canvas):
         col += col_speed
 
         if space:
-            CORUTINES.append(fire(canvas, row-1, col+2))
+            corutines.append(fire(canvas, row-1, col+2))
         if count == 2:
             current_frame = next(iterator)
             count = 0
 
-        for obstacle in OBSTACLES:
+        for obstacle in obstacles:
             if obstacle.has_collision(row, col):
                 game_over = read_frame('./images', 'game_over.txt')
                 over_row, over_col = get_frame_size(game_over)
-                CORUTINES.append(print_game_over(canvas, (max_row-over_row)/2, (max_col-over_col)/2, game_over))
+                corutines.append(print_game_over(canvas, (max_row-over_row)/2, (max_col-over_col)/2, game_over))
                 return
 
         draw_frame(canvas, row, col, current_frame, negative=False)
@@ -127,12 +130,13 @@ async def draw_rocket(canvas):
 
 
 async def fly_garbage(canvas, col, garbage_frame, speed=0.5):
-    """Animate garbage, flying from top to bottom. Сolumn position will stay same, as specified on start."""
+    global obstacles
+    global obstacles_in_last_collisions
     max_row, max_col = canvas.getmaxyx()
     garbage_rows, garbage_cols = get_frame_size(garbage_frame)
     row = 1
     garbage_obstacle_frame = Obstacle(row, col, garbage_rows, garbage_cols)
-    OBSTACLES.append(garbage_obstacle_frame)
+    obstacles.append(garbage_obstacle_frame)
     await sleep(1)
 
     while row < max_row - 1 - garbage_rows and col > 1 and col + garbage_cols < max_col - 1:
@@ -141,28 +145,30 @@ async def fly_garbage(canvas, col, garbage_frame, speed=0.5):
         draw_frame(canvas, row, col, garbage_frame, negative=True)
         row += speed
         garbage_obstacle_frame.row += speed
-        for obstacle in OBSTACLES_IN_LAST_COLLISIONS:
+        for obstacle in obstacles_in_last_collisions:
             if garbage_obstacle_frame is obstacle:
-                OBSTACLES.remove(obstacle)
+                obstacles.remove(obstacle)
                 await explode(canvas, row, col)
                 return
 
 
 async def fill_orbit_with_garbage(canvas, max_col, garbage_frames):
+    global corutines
     while True:
-        if YEAR > 1961:
-            CORUTINES.append(fly_garbage(canvas,
+        if year > 1961:
+            corutines.append(fly_garbage(canvas,
                                          random.randint(1, max_col-1),
                                          random.choice(garbage_frames),
                                          ))
-            await sleep(get_garbage_delay_tics(YEAR))
+            await sleep(get_garbage_delay_tics(year))
         else:
             await asyncio.sleep(0)
 
 
 async def fire(canvas, start_row, start_column, rows_speed=-1, columns_speed=0):
-    """Display animation of gun shot, direction and speed can be specified."""
-    if YEAR >= 2020:
+    global obstacles
+    global obstacles_in_last_collisions
+    if year >= 2020:
         row, column = start_row, start_column
 
         canvas.addstr(round(row), round(column), '*')
@@ -189,9 +195,9 @@ async def fire(canvas, start_row, start_column, rows_speed=-1, columns_speed=0):
             row += rows_speed
             column += columns_speed
 
-            for obstacle in OBSTACLES:
+            for obstacle in obstacles:
                 if obstacle.has_collision(row, column):
-                    OBSTACLES_IN_LAST_COLLISIONS.append(obstacle)
+                    obstacles_in_last_collisions.append(obstacle)
                     return
 
 
@@ -208,18 +214,18 @@ def draw_message(canvas, year, phrase, row):
 
 
 async def show_year(canvas, phrases, rows):
-    global YEAR
+    global year
     years = list(phrases)
-    for YEAR, phrase in phrases.items():
+    for year, phrase in phrases.items():
         try:
-            next_year = years[years.index(YEAR) + 1]
+            next_year = years[years.index(year) + 1]
         except (ValueError, IndexError):
-            next_year = YEAR
-        for __ in range(5 * (next_year - YEAR)):
-            draw_message(canvas, YEAR, phrase, rows)
+            next_year = year
+        for __ in range(5 * (next_year - year)):
+            draw_message(canvas, year, phrase, rows)
             await sleep(1)
     while True:
-        draw_message(canvas, YEAR, phrase, rows)
+        draw_message(canvas, year, phrase, rows)
         await sleep(1)
 
 
